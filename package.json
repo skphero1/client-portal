@@ -1,0 +1,40 @@
+{
+  "name": "sysfortech-client-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Multi-tenant agency client portal demonstrating GraphQL Yoga, DataLoader, strict tenant authorization, and cursor pagination.",
+  "scripts": {
+    "quickstart": "bash ./scripts/quickstart.sh",
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "typecheck": "prisma generate && tsc --noEmit",
+    "db:up": "docker compose up -d --wait",
+    "db:down": "docker compose down -v",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:setup:test": "dotenv -e .env.test -- prisma migrate deploy",
+    "test": "dotenv -e .env.test -- prisma migrate deploy && dotenv -e .env.test -- vitest run",
+    "benchmark": "dotenv -e .env.test -- prisma migrate deploy && dotenv -e .env.test -- tsx scripts/benchmark-n-plus-1.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "5.20.0",
+    "dataloader": "2.2.2",
+    "graphql": "16.9.0",
+    "graphql-yoga": "5.7.0",
+    "next": "14.2.15",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "20.16.5",
+    "@types/react": "18.3.5",
+    "@types/react-dom": "18.3.0",
+    "dotenv-cli": "7.4.2",
+    "prisma": "5.20.0",
+    "tsx": "4.19.1",
+    "typescript": "5.6.2",
+    "vitest": "2.1.1"
+  }
+}

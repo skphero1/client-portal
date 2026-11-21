@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CLIENT
+  AGENCY_MANAGER
+}
+
+enum ProjectStatus {
+  DISCOVERY
+  ACTIVE
+  QA_REVIEW
+  COMPLETED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_ON_CLIENT
+  RESOLVED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+}
+
+model Tenant {
+  id          String             @id
+  slug        String             @unique
+  name        String
+  industry    String
+  createdAt   DateTime           @default(now())
+  memberships TenantMembership[]
+  projects    Project[]
+  tickets     Ticket[]
+  invoices    Invoice[]
+}
+
+model User {
+  id              String             @id
+  demoKey         String             @unique
+  email           String             @unique
+  name            String
+  title           String
+  role            Role
+  createdAt       DateTime           @default(now())
+  memberships     TenantMembership[]
+  authoredTickets Ticket[]           @relation("TicketAuthor")
+}
+
+model TenantMembership {
+  id        String   @id @default(cuid())
+  userId    String
+  tenantId  String
+  createdAt DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([tenantId])
+}
+
+model Project {
+  id               String        @id @default(cuid())
+  tenantId         String
+  code             String        @unique
+  name             String
+  summary          String
+  status           ProjectStatus @default(ACTIVE)
+  budgetCents      Int
+  targetLaunchDate DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tickets  Ticket[]
+  invoices Invoice[]
+
+  @@index([tenantId, createdAt(sort: Desc), id(sort: Asc)])
+}
+
+model Ticket {
+  id          String         @id @default(cuid())
+  tenantId    String
+  projectId   String
+  createdById String
+  title       String
+  description String
+  status      TicketStatus   @default(OPEN)
+  priority    TicketPriority @default(MEDIUM)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User    @relation("TicketAuthor", fields: [createdById], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, projectId, createdAt(sort: Desc)])
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  tenantId      String
+  projectId     String
+  invoiceNumber String        @unique
+  description   String
+  amountCents   Int
+  status        InvoiceStatus
+  issuedAt      DateTime
+  dueAt         DateTime
+  paidAt        DateTime?
+  lineItemsJson Json
+  createdAt     DateTime      @default(now())
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, projectId, issuedAt(sort: Desc)])
+}
